@@ -10,7 +10,7 @@ import numpy as np
 class Model:
     def __init__(self):
         self.model = Sequential([
-            Conv2D(100, (3, 3), activation='relu', input_shape=(150, 150, 3)),
+            Conv2D(100, (3, 3),activation='relu', input_shape=(150, 150, 3)),
             MaxPooling2D(2, 2),
 
             Conv2D(100, (3, 3), activation='relu'),
@@ -29,7 +29,7 @@ class Model:
         self.trainAug = None
         self.testAug = None
 
-        self.toCategorical = tf.keras.utils.to_categorical
+        #self.toCategorical = tf.keras.utils.to_categorical
         self.trainGenerator = None
         self.testGenerator = None
         self.ModelCheckpoint = tf.keras.callbacks.ModelCheckpoint
@@ -62,7 +62,7 @@ class Model:
 
     def compileModel(self):
         print("[INFO]: COMPILING MODEL...")
-        self.model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+        self.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
         self.TrainingEvalSavModel()
 
     def TrainingEvalSavModel(self):
@@ -71,7 +71,7 @@ class Model:
                                      mode='auto')
 
         H = self.model.fit_generator(self.trainGenerator,
-                                      epochs=15,
+                                      epochs=50,
                                      steps_per_epoch=self.calculate_spe(self.totalTrainingData),
                                      validation_steps=self.calculate_spe(self.totalTestingData),
                                       validation_data=self.testGenerator,
@@ -81,7 +81,7 @@ class Model:
         self.model.save("MaskDiscernment.model", save_format="h5")
 
         print("[INFO]: PLOTTING THE TRAINING LOSS AND ACCURACY")
-        n = 15
+        n = 50
         plt.style.use("ggplot")
         plt.figure()
         plt.plot(np.arange(0, n), H.history['loss'], label="train_loss")
@@ -89,7 +89,7 @@ class Model:
         plt.plot(np.arange(0, n), H.history["accuracy"], label="train_acc")
         plt.plot(np.arange(0, n), H.history["val_accuracy"], label="val_acc")
         plt.title("Training loss and accuracy")
-        plt.xlabel("Epoch #")
+        plt.xlabel("Epoch 50")
         plt.ylabel("LOSS/ACCURACY")
         plt.legend(loc="lower left")
         plt.savefig("plot.png")
