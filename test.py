@@ -1,12 +1,14 @@
+
 import cv2
 import numpy as np
-#from keras.models import load_model
-import tensorflow as tf
+from keras.models import load_model
+from keras_preprocessing.image import img_to_array
 
-load_model = tf.keras.models.load_model
-model = load_model("RFMDMode.model")
-results = {0: 'mask', 1: 'without mask', 2: 'improper mask'}
-GR_dict = {0: (0, 255, 0), 1: (0, 0, 255), 2:(0,0,255)}
+
+model = load_model("RFMDModel(2.0).model")
+
+results = {1: 'mask', 2: 'without mask', 0: 'improper mask'}
+GR_dict = {1: (0, 255, 0), 2: (0, 0, 255), 0:(0,0,255)}
 rect_size = 4
 cap = cv2.VideoCapture(0)
 haarcascade = cv2.CascadeClassifier(
@@ -21,15 +23,20 @@ while True:
         (x, y, w, h) = [v * rect_size for v in f]
 
         face_img = im[y:y + h, x:x + w]
-        rerect_sized = cv2.resize(face_img, (28, 28))
-        rerect_sized = cv2.cvtColor(rerect_sized, cv2.COLOR_BGR2GRAY)
-        normalized = rerect_sized / 255.0
-        reshaped = np.reshape(normalized, (28, 28, 1))
-        reshaped = np.vstack([reshaped])
-        result = model.predict(reshaped)
-        print("Result:", result)
+        Image = cv2.resize(face_img, (28, 28))
+        Image = cv2.cvtColor(Image, cv2.COLOR_BGR2GRAY)
+        Image = img_to_array(Image)
+        Image = np.array(Image)
+        Image = np.reshape(Image, (1,28,28,1))
+        print("[INFO]: PREDICTING...")
 
-        label = np.argmax(result, axis=1)[0]
+
+        result = model.predict(Image)
+
+        #print("Info: Result:", result)
+        result = list((result[0]))
+        print("Label list:", result)
+        label = result.index(max(result))
 
         cv2.rectangle(im, (x, y), (x + w, y + h), GR_dict[label], 2)
         cv2.rectangle(im, (x, y - 40), (x + w, y), GR_dict[label], -1)
