@@ -1,6 +1,8 @@
+import math
+
 import keras
 from keras.models import Model
-from keras.layers import Input, GlobalAveragePooling2D, Dense, concatenate, AveragePooling2D
+from keras.layers import Input, GlobalAveragePooling2D, Dense, concatenate, AveragePooling2D, Flatten
 from keras.layers.convolutional import Conv2D
 from keras.layers.core import Activation, Dropout
 from keras.layers.normalization.batch_normalization import BatchNormalization
@@ -13,7 +15,7 @@ import random
 import cv2
 from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split
-# from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import LabelBinarizer
 # import matplotlib.pyplot as plt
 from keras.callbacks import ModelCheckpoint
 from sklearn.preprocessing import LabelEncoder
@@ -132,10 +134,11 @@ class DenseNet:
 
 
 print("[INFO]: INITIALIZING THE DENSENET")
-densenet = DenseNet((28, 28, 1), nb_classes=10, depth=35)
+densenet = DenseNet((28, 28, 1), nb_classes=3, depth=35, dropout_rate=0.5)
 
 print("[INFO]: CALLING THE BUILDING MODEL")
 model = densenet.build_model()
+
 
 print("[INFO]: MODEL OPTIMIZER...")
 model_optimizer = Adam(lr=1E-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
@@ -167,51 +170,56 @@ labels = np.array(labels)
 labelencoder = LabelEncoder()
 labels = labelencoder.fit_transform(labels)
 
+# labelBin = LabelBinarizer()
+# labels = labelBin.fit_transform(labels)
+
 # print("[INFO] data:\n", data)
 # print("[INFO] labels:\n", labels)
 
 
-(xtrain,xtest,ytrain,ytest)=train_test_split(data,labels,test_size=0.25,random_state=42)
+(xtrain,xtest,ytrain,ytest)=train_test_split(data,labels,test_size=0.20,random_state=42)
 
 filepath = "bestmodelRFMD.hdf5"
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc',  verbose=1, save_best_only=True, mode='max')
 callbacks_list = [checkpoint]
 H = model.fit(xtrain, ytrain,
-                    batch_size=64,
-                    epochs=1,
+                    batch_size=32,
+                    epochs=15,
                     shuffle=True,
                     verbose=1,
                     validation_data=(xtest, ytest),
+                    steps_per_epoch= int(math.ceil((1. * len(xtrain)) / 32)),
                     callbacks=callbacks_list,
+                    validation_steps= int(math.ceil((1. * len(xtest)) / 32))
                     )
 
-# # Make predictions
-# predictions_valid = model.predict_on_batch(xtest)
-#
-# # Cross-entropy loss score
-# score = log_loss(ytest, predictions_valid)
+# Make predictions
+predictions_valid = model.predict_on_batch(xtest)
+
+# Cross-entropy loss score
+score = log_loss(ytest, predictions_valid)
 
 model.save_weights('P:\Folder Bulbasaur\Project(4.1)\weights.h5')
-model.save('RFMDMode.model', save_format="h5")
+model.save('RFMDModel(2.0).model', save_format="h5")
 
-acc=H.history['acc']
-val_acc=H.history['val_acc']
-loss=H.history['loss']
-val_loss=H.history['val_loss']
+# acc=H.history['accuracy']
+# val_acc=H.history['val_acc']
+# loss=H.history['loss']
+# val_loss=H.history['val_loss']
 
-epochs=range(len(acc)) #No. of epochs
+# epochs=range(len(acc)) #No. of epochs
 
 #Plot training and validation accuracy per epoch
 
-n = epochs
-plt.style.use("ggplot")
-plt.figure()
-plt.plot(np.arange(0, n), H.history["loss"], label="train_loss")
-plt.plot(np.arange(0, n), H.history['val_loss'], label="val_loss")
-plt.plot(np.arange(0, n), H.history["accuracy"], label="train_acc")
-plt.plot(np.arange(0, n), H.history["val_accuracy"], label="val_acc")
-plt.title("Training loss and accuracy")
-plt.xlabel("Epoch #")
-plt.ylabel("LOSS/ACCURACY")
-plt.legend(loc="lower left")
-plt.savefig("plot.png")
+# n = epochs
+# plt.style.use("ggplot")
+# plt.figure()
+# plt.plot(np.arange(0, n), H.history["loss"], label="train_loss")
+# plt.plot(np.arange(0, n), H.history['val_loss'], label="val_loss")
+# plt.plot(np.arange(0, n), H.history["accuracy"], label="train_acc")
+# plt.plot(np.arange(0, n), H.history["val_accuracy"], label="val_acc")
+# plt.title("Training loss and accuracy")
+# plt.xlabel("Epoch #")
+# plt.ylabel("LOSS/ACCURACY")
+# plt.legend(loc="lower left")
+# plt.savefig("plot.png")
